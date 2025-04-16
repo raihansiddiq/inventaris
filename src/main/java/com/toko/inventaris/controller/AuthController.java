@@ -1,7 +1,12 @@
 package com.toko.inventaris.controller;
 
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import com.toko.inventaris.dto.LoginRequest;
+import com.toko.inventaris.dto.LoginResponse;
+import com.toko.inventaris.security.JwtUtil;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.*;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
 /*
 IntelliJ IDEA 2022.3.1 (Community Edition)
@@ -13,12 +18,24 @@ Created on 4/14/2025 10:16 AM
 Version 1.0
 */
 
-@Controller
+@RestController
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    // Halaman login
-    @GetMapping("/login")
-    public String login() {
-        return "login"; // Kembalikan halaman login.html
+    private final AuthenticationManager authManager;
+    private final JwtUtil jwtUtil;
+    private final com.toko.inventaris.service.impl.AdminDetailsService adminDetailsService;
+
+    @PostMapping("/login")
+    public LoginResponse login(@RequestBody LoginRequest request) {
+        UsernamePasswordAuthenticationToken authToken =
+                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
+        authManager.authenticate(authToken);
+
+        UserDetails user = adminDetailsService.loadUserByUsername(request.getUsername());
+        String token = jwtUtil.generateToken(user.getUsername());
+
+        return new LoginResponse(token);
     }
 }
